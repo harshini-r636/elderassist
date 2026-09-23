@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElderAssist - Everyday Digital Help for Seniors</title>
+  <meta name="description" content="ElderAssist connects elderly people with caring community volunteers for help with digital payments, appointments, forms, video calls, and smartphone use.">
+  
+  <!-- Accessibility & Theme Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+  
+  <!-- Supabase JS Client Library (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Skip Link for Screen Readers and Keyboard Navigation -->
+  <a href="#main-content" style="position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;" onfocus="this.style.position='static'; this.style.width='auto'; this.style.height='auto';">
+    Skip to main content
+  </a>
+
+  <!-- Top Accessibility Toolbar -->
+  <header class="a11y-bar" role="region" aria-label="Accessibility Settings">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-weight: 700;">👁️ Accessibility:</span>
+      <div class="a11y-controls" role="toolbar" aria-label="Text Size and Vision Controls">
+        <button type="button" class="a11y-btn active" data-font-scale="normal" title="Standard text size">
+          A Normal
+        </button>
+        <button type="button" class="a11y-btn" data-font-scale="large" title="Larger text size">
+          A+ Large
+        </button>
+        <button type="button" class="a11y-btn" data-font-scale="xlarge" title="Extra large text size">
+          A++ Extra Large
+        </button>
+        <button type="button" class="a11y-btn" id="btn-high-contrast" title="Toggle high contrast vision mode">
+          🌓 High Contrast
+        </button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-left: auto;">
+      <!-- Supabase Connection Status Badge -->
+      <button type="button" class="a11y-btn" onclick="window.ElderApp.openSupabaseModal()" title="Supabase Database Settings">
+        <span id="supabase-status-badge">⚡ Interactive Demo Mode</span>
+      </button>
+
+      <!-- Global TTS Stop/Start Button -->
+      <button type="button" class="a11y-btn tts-global-btn" onclick="window.ElderA11y.stopSpeech()" title="Stop voice reading">
+        <span>🔊</span> <span>Voice Audio</span>
+      </button>
+
+      <!-- Notifications Bell -->
+      <button type="button" class="a11y-btn" style="position: relative;" onclick="window.ElderApp.openNotificationsModal()" aria-label="View Notifications">
+        🔔 Alerts
+        <span id="notif-badge-count" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border-radius: 9999px; font-size: 0.75rem; font-weight: 800; padding: 2px 7px; border: 2px solid white;">
+          0
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Navigation Header -->
+  <nav class="main-header" role="navigation" aria-label="Main Navigation">
+    <div class="header-container">
+      <!-- Brand Logo -->
+      <a href="#" class="brand-logo" onclick="window.location.reload(); return false;">
+        <div class="brand-icon-wrapper" aria-hidden="true">🤝</div>
+        <div>
+          <div style="line-height: 1.1;">ElderAssist</div>
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Simple Digital Help for Seniors</div>
+        </div>
+      </a>
+
+      <!-- Quick Role Switcher (Elderly, Volunteer, Admin) -->
+      <div class="role-pill-nav" role="tablist" aria-label="Choose Experience Mode">
+        <button type="button" class="role-pill-btn active" data-role="elderly" role="tab" aria-selected="true">
+          👵 Senior (Margaret)
+        </button>
+        <button type="button" class="role-pill-btn" data-role="volunteer" role="tab" aria-selected="false">
+          🤝 Volunteer (David)
+        </button>
+        <button type="button" class="role-pill-btn" data-role="admin" role="tab" aria-selected="false">
+          🛡️ Admin (Sarah)
+        </button>
+      </div>
+
+      <!-- Current Profile Details -->
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="text-align: right; display: none; @media(min-width: 640px){display: block;}">
+          <div id="current-user-display-name" style="font-weight: 700; font-size: 1rem; color: var(--text-main);">Margaret Jenkins</div>
+          <div id="current-user-display-role" style="font-size: 0.8rem; font-weight: 700; color: var(--primary);">ELDERLY</div>
+        </div>
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; border: 2px solid var(--border-color);">
+          👤
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Application Content Container -->
+  <main id="main-content" style="max-width: 1280px; margin: 0 auto; padding: 24px 20px; width: 100%; flex: 1;">
+
+    <!-- =====================================================================
+         SECTION 1: ELDERLY USER EXPERIENCE
+         ===================================================================== -->
+    <section id="section-elderly" style="display: block;" aria-label="Senior Citizen Portal">
+      
+      <!-- Welcoming Hero Banner -->
+      <div class="card" style="background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); border: 3px solid #bfdbfe; margin-bottom: 28px; padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
+              Good day, Margaret! 🌸
+            </div>
+            <h1 style="font-size: var(--font-h1); font-weight: 800; color: var(--text-main); margin-bottom: 10px;">
+              What digital task can we help you with today?
+            </h1>
+            <p style="font-size: var(--font-body); color: var(--text-muted); max-width: 700px;">
+              Our verified community volunteers are ready to guide you kindly and patiently over a phone call or chat. No question is ever too small!
+            </p>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn btn-primary" onclick="window.ElderApp.openNewRequestModal('payments')" style="font-size: 1.2rem; padding: 14px 28px;">
+              ➕ Ask for Help Now
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="window.ElderA11y.speak('Welcome to ElderAssist. Tap any of the five big category buttons below to ask a volunteer for help with payments, appointments, forms, video calls, or your smartphone.')">
+              🔊 Listen to Instructions
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 Big Category Cards -->
+      <div style="margin-bottom: 36px;">
+        <h2 style="font-size: var(--font-h2); font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+          <span>👉 Tap a Category to Get Help:</span>
+        </h2>
+
+        <div class="grid-categories">
+          <!-- 1. Payments -->
+          <div class="category-card" data-request-cat="payments" role="button" tabindex="0" aria-label="Digital Payments: Pay electricity, water, or bills">
+            <div class="category-icon-wrapper" style="background: #e0e7ff; color: #3730a3;">💳</div>
+            <h3 style="font-size: var(--font-h3); font-weight: 800;">Digital Payments</h3>
+            <p style="font-size: var(--font-sm); color: var(--text-muted);">Electricity, water bills, QR codes & UPI</p>
+            <span class="badge badge-accepted" style="margin-top: auto;">Tap for Help ➔</span>
+          </div>
+
+          <!-- 2. Appointments -->
+          <div class="category-card" data-request-cat="appointments" role="button" tabindex="0" aria-label="Appointments: Book doctor visits or lab tests">
+            <div class="category-icon-wrapper" style="background: #ecfdf5; color: #065f46;">📅</div>
+            <h3 style="font-size: var(--font-h3); font-weight: 800;">Appointments</h3>
+            <p style="font-size: var(--font-sm); color: var(--text-muted);">Doctor clinics, lab tests & hospital visits</p>
+            <span class="badge badge-accepted" style="margin-top: auto;">Tap for Help ➔</span>
+          </div>
+
+          <!-- 3. Online Forms -->
+          <div class="category-card" data-request-cat="online_forms" role="button" tabindex="0" aria-label="Online Forms: Senior pension, certificates, passes">
+            <div class="category-icon-wrapper" style="background: #fef3c7; color: #92400e;">📝</div>
+            <h3 style="font-size: var(--font-h3); font-weight: 800;">Online Forms</h3>
+            <p style="font-size: var(--font-sm); color: var(--text-muted);">Pension certificates, KYC & bus/train passes</p>
+            <span class="badge badge-accepted" style="margin-top: auto;">Tap for Help ➔</span>
+          </div>
+
+          <!-- 4. Video Calls -->
+          <div class="category-card" data-request-cat="video_calls" role="button" tabindex="0" aria-label="Video Calls: WhatsApp, Zoom calls with family">
+            <div class="category-icon-wrapper" style="background: #f3e8ff; color: #6b21a8;">📹</div>
+            <h3 style="font-size: var(--font-h3); font-weight: 800;">Video Calls</h3>
+            <p style="font-size: var(--font-sm); color: var(--text-muted);">WhatsApp, Zoom or Meet calls with loved ones</p>
+            <span class="badge badge-accepted" style="margin-top: auto;">Tap for Help ➔</span>
+          </div>
+
+          <!-- 5. Smartphone Use -->
+          <div class="category-card" data-request-cat="smartphone_use" role="button" tabindex="0" aria-label="Smartphone Use: Bigger text, sound, memory, Wi-Fi">
+            <div class="category-icon-wrapper" style="background: #fee2e2; color: #991b1b;">📱</div>
+            <h3 style="font-size: var(--font-h3); font-weight: 800;">Smartphone Use</h3>
+            <p style="font-size: var(--font-sm); color: var(--text-muted);">Bigger text, clear storage, Wi-Fi & sound</p>
+            <span class="badge badge-accepted" style="margin-top: auto;">Tap for Help ➔</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Help Requests Section -->
+      <div style="margin-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 style="font-size: var(--font-h2); font-weight: 800; color: var(--text-main);">
+              📋 My Help Requests
+            </h2>
+            <p style="font-size: var(--font-body); color: var(--text-muted);">
+              Track the live status of your requests and message your assigned volunteer.
+            </p>
+          </div>
+          <button class="btn btn-primary" onclick="window.ElderApp.openNewRequestModal('payments')">
+            ➕ New Request
+          </button>
+        </div>
+
+        <div id="elderly-requests-container" aria-live="polite">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- Interactive Digital Step-by-Step Guides Section -->
+      <div style="margin-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 style="font-size: var(--font-h2); font-weight: 800; color: var(--text-main);">
+              📘 Self-Paced Step-by-Step Guides
+            </h2>
+            <p style="font-size: var(--font-body); color: var(--text-muted);">
+              Follow clear instructions with pictures and voice narration anytime you want.
+            </p>
+          </div>
+        </div>
+
+        <div id="guides-grid-container" class="grid-guides">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         SECTION 2: VOLUNTEER EXPERIENCE
+         ===================================================================== -->
+    <section id="section-volunteer" style="display: none;" aria-label="Volunteer Portal">
+      
+      <!-- Volunteer Impact Highlights -->
+      <div class="card" style="background: linear-gradient(135deg, #1e3a8a 0%, #0f766e 100%); color: white; margin-bottom: 28px; padding: 28px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+          <div>
+            <div style="background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 12px; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px;">
+              ✅ Verified ElderAssist Volunteer
+            </div>
+            <h1 style="font-size: var(--font-h1); font-weight: 800; margin-bottom: 8px;">
+              Welcome back, David!
+            </h1>
+            <p style="font-size: var(--font-body); opacity: 0.95; max-width: 650px;">
+              Thank you for dedicating your patience and technical skills to empower seniors in our community.
+            </p>
+          </div>
+
+          <!-- Impact Metrics -->
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-md); padding: 14px 20px; text-align: center; min-width: 100px;">
+              <div id="vol-stat-tasks" style="font-size: 1.8rem; font-weight: 800;">19</div>
+              <div style="font-size: 0.85rem; opacity: 0.9;">Seniors Helped</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-md); padding: 14px 20px; text-align: center; min-width: 100px;">
+              <div id="vol-stat-hours" style="font-size: 1.8rem; font-weight: 800;">32 hrs</div>
+              <div style="font-size: 0.85rem; opacity: 0.9;">Hours Given</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: var(--radius-md); padding: 14px 20px; text-align: center; min-width: 100px;">
+              <div id="vol-stat-rating" style="font-size: 1.8rem; font-weight: 800; color: #fde047;">4.9 ★</div>
+              <div style="font-size: 0.85rem; opacity: 0.9;">Senior Rating</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Active Tasks Under Volunteer Supervision -->
+      <div style="margin-bottom: 36px;">
+        <h2 style="font-size: var(--font-h2); font-weight: 800; margin-bottom: 12px; color: var(--text-main);">
+          📌 My Active Helping Tasks
+        </h2>
+        <div id="volunteer-active-tasks">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- Available Open Help Requests Board -->
+      <div style="margin-bottom: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h2 style="font-size: var(--font-h2); font-weight: 800; color: var(--text-main);">
+              🤝 Open Requests from Seniors
+            </h2>
+            <p style="font-size: var(--font-body); color: var(--text-muted);">
+              Select any request below to accept and start assisting a senior.
+            </p>
+          </div>
+
+          <!-- Filters -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <select id="filter-vol-category" class="form-select" style="min-height: 44px; padding: 6px 14px; font-size: 0.95rem;" aria-label="Filter by Category">
+              <option value="all">All Categories</option>
+              <option value="payments">Digital Payments</option>
+              <option value="appointments">Appointments</option>
+              <option value="online_forms">Online Forms</option>
+              <option value="video_calls">Video Calls</option>
+              <option value="smartphone_use">Smartphone Use</option>
+            </select>
+
+            <select id="filter-vol-urgency" class="form-select" style="min-height: 44px; padding: 6px 14px; font-size: 0.95rem;" aria-label="Filter by Urgency">
+              <option value="all">All Urgencies</option>
+              <option value="urgent">Need Help Today</option>
+              <option value="soon">In 1-2 Days</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="volunteer-open-board" class="grid-cards">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         SECTION 3: ADMIN DASHBOARD
+         ===================================================================== -->
+    <section id="section-admin" style="display: none;" aria-label="Administrator Dashboard">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h1 style="font-size: var(--font-h1); font-weight: 800; color: var(--text-main);">
+            🛡️ Platform Administration
+          </h1>
+          <p style="font-size: var(--font-body); color: var(--text-muted);">
+            Manage community safety, track request fulfillment, users, and digital guides.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" onclick="window.ElderApp.openNewGuideModal()">
+            ➕ Create Digital Guide
+          </button>
+          <button class="btn btn-secondary" onclick="window.ElderApp.openSupabaseModal()">
+            ⚙️ Supabase Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Overview -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 30px;">
+        <div class="card" style="text-align: center; padding: 20px;">
+          <div style="font-size: var(--font-sm); color: var(--text-muted); font-weight: 700;">TOTAL REQUESTS</div>
+          <div id="adm-stat-total-req" style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-top: 4px;">0</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+          <div style="font-size: var(--font-sm); color: var(--text-muted); font-weight: 700;">COMPLETED</div>
+          <div id="adm-stat-completed" style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); margin-top: 4px;">0</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+          <div style="font-size: var(--font-sm); color: var(--text-muted); font-weight: 700;">VOLUNTEERS</div>
+          <div id="adm-stat-volunteers" style="font-size: 2.2rem; font-weight: 800; color: #6366f1; margin-top: 4px;">0</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+          <div style="font-size: var(--font-sm); color: var(--text-muted); font-weight: 700;">SENIORS SERVED</div>
+          <div id="adm-stat-seniors" style="font-size: 2.2rem; font-weight: 800; color: #0d9488; margin-top: 4px;">0</div>
+        </div>
+        <div class="card" style="text-align: center; padding: 20px;">
+          <div style="font-size: var(--font-sm); color: var(--text-muted); font-weight: 700;">AVG SATISFACTION</div>
+          <div id="adm-stat-rating" style="font-size: 2.2rem; font-weight: 800; color: #f59e0b; margin-top: 4px;">5.0 ★</div>
+        </div>
+      </div>
+
+      <!-- Requests Moderation Table -->
+      <div class="card" style="margin-bottom: 28px; overflow-x: auto;">
+        <h2 style="font-size: var(--font-h3); font-weight: 800; margin-bottom: 14px;">
+          📋 All Help Requests Moderation
+        </h2>
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-body);">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color); background: var(--bg-secondary);">
+              <th style="padding: 12px;">Request Title</th>
+              <th style="padding: 12px;">Senior</th>
+              <th style="padding: 12px;">Volunteer</th>
+              <th style="padding: 12px;">Status</th>
+              <th style="padding: 12px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adm-requests-tbody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- User Directory & Digital Guides Two-Column -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 28px;">
+        <!-- User Directory -->
+        <div class="card">
+          <h2 style="font-size: var(--font-h3); font-weight: 800; margin-bottom: 14px;">
+            👥 Registered Users
+          </h2>
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-sm);">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color); background: var(--bg-secondary);">
+                <th style="padding: 10px;">Name</th>
+                <th style="padding: 10px;">Role</th>
+                <th style="padding: 10px;">Contact</th>
+                <th style="padding: 10px;">Location</th>
+                <th style="padding: 10px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="adm-users-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Guides Management -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h2 style="font-size: var(--font-h3); font-weight: 800;">
+              📘 Digital Guides Library
+            </h2>
+            <button class="btn btn-primary btn-sm" onclick="window.ElderApp.openNewGuideModal()">
+              + New Guide
+            </button>
+          </div>
+          <div id="adm-guides-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Senior Feedback Stream -->
+      <div class="card">
+        <h2 style="font-size: var(--font-h3); font-weight: 800; margin-bottom: 14px;">
+          💬 Senior Citizen Reviews & Feedback
+        </h2>
+        <div id="adm-reviews-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- =======================================================================
+       MODAL 1: CREATE HELP REQUEST (ELDERLY)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-create-request" role="dialog" aria-modal="true" aria-labelledby="modal-req-heading" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-req-heading" style="font-size: var(--font-h2); font-weight: 800; color: var(--text-main);">
+          ➕ Ask a Volunteer for Help
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="form-create-request">
+        <div class="modal-body">
+          <!-- Category Picker -->
+          <div class="form-group">
+            <label class="form-label" for="req-category">1. What kind of help do you need?</label>
+            <select id="req-category" class="form-select">
+              <option value="payments">💳 Digital Payments (Bills, UPI, Cards)</option>
+              <option value="appointments">📅 Appointments (Doctor, Clinic, Hospital)</option>
+              <option value="online_forms">📝 Online Forms (Pension, KYC, Passes)</option>
+              <option value="video_calls">📹 Video Calls (WhatsApp, Zoom, Meet)</option>
+              <option value="smartphone_use">📱 Smartphone Use (Text size, Storage, Wi-Fi)</option>
+            </select>
+          </div>
+
+          <!-- Preset 1-Tap Chips -->
+          <div id="preset-chips-container" style="margin-bottom: 16px;"></div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label class="form-label" for="req-title">2. Brief Title</label>
+            <input type="text" id="req-title" class="form-input" placeholder="e.g. Help me pay my electric bill online" required>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="req-description">3. Details (Tell us what you would like done)</label>
+            <textarea id="req-description" class="form-textarea" placeholder="e.g. I have the paper bill and Google Pay on my phone. I would like a volunteer to guide me over the phone." required></textarea>
+          </div>
+
+          <!-- Urgency -->
+          <div class="form-group">
+            <label class="form-label" for="req-urgency">4. How urgently do you need this?</label>
+            <select id="req-urgency" class="form-select">
+              <option value="urgent">🔴 Need Help Today (Urgent)</option>
+              <option value="soon" selected>🟡 In Next 1-2 Days</option>
+              <option value="flexible">🔵 Whenever Volunteer is Free</option>
+            </select>
+          </div>
+
+          <!-- Preferred Contact Method -->
+          <div class="form-group">
+            <label class="form-label" for="req-contact-method">5. How would you like the volunteer to contact you?</label>
+            <select id="req-contact-method" class="form-select">
+              <option value="phone_call">📞 Regular Phone Call (Recommended)</option>
+              <option value="whatsapp">💬 WhatsApp Message or Call</option>
+              <option value="in_app">💻 In-App Chat Here</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-size: 1.15rem; padding: 14px 28px;">
+            🚀 Submit Help Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 2: INTERACTIVE STEP-BY-STEP GUIDE VIEWER
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-guide-viewer" role="dialog" aria-modal="true" aria-labelledby="guide-viewer-title" aria-hidden="true">
+    <div class="modal-content" style="max-width: 720px;">
+      <div class="modal-header">
+        <h2 id="guide-viewer-title" style="font-size: var(--font-h2); font-weight: 800; color: var(--text-main);">
+          Step-by-Step Guide
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close guide">✕</button>
+      </div>
+
+      <div class="modal-body" id="guide-step-body">
+        <!-- Injected dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 3: IN-APP MESSAGING / CHAT
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-chat" role="dialog" aria-modal="true" aria-labelledby="chat-modal-title" aria-hidden="true">
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <div>
+          <h2 id="chat-modal-title" style="font-size: var(--font-h3); font-weight: 800; margin-bottom: 2px;">Chat</h2>
+          <div id="chat-partner-info" style="font-size: var(--font-sm); color: var(--text-muted);"></div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close chat">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding: 16px;">
+        <!-- Message History Thread -->
+        <div class="chat-thread" id="chat-messages-thread" aria-live="polite">
+          <!-- Messages injected dynamically -->
+        </div>
+
+        <!-- 1-Tap Preset Quick Replies -->
+        <div style="margin-top: 12px;">
+          <div style="font-size: var(--font-sm); font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+            ⚡ Quick 1-Tap Replies:
+          </div>
+          <div class="preset-chip-list" id="chat-quick-replies">
+            <!-- Injected dynamically based on role -->
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="form-chat-send" style="margin-top: 14px; display: flex; gap: 10px;">
+          <input type="text" id="chat-input-text" class="form-input" placeholder="Type your message here..." required style="flex: 1;">
+          <button type="submit" class="btn btn-primary" style="min-width: 100px;">
+            Send ➔
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 4: LEAVE RATING & FEEDBACK (ELDERLY)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-review" role="dialog" aria-modal="true" aria-labelledby="modal-review-heading" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-review-heading" style="font-size: var(--font-h2); font-weight: 800;">
+          ⭐ Rate Your Volunteer
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="form-submit-review">
+        <div class="modal-body">
+          <p style="font-size: var(--font-body); color: var(--text-muted); margin-bottom: 16px;">
+            How was your experience with <strong id="review-volunteer-name" style="color: var(--text-main);">your volunteer</strong>?
+          </p>
+
+          <!-- 5 Big Stars -->
+          <div class="form-group" style="text-align: center;">
+            <label class="form-label">Tap Stars to Rate:</label>
+            <div class="star-rating" style="justify-content: center;" role="radiogroup" aria-label="Star Rating">
+              <button type="button" class="star-btn selected" data-value="1" aria-label="1 star">★</button>
+              <button type="button" class="star-btn selected" data-value="2" aria-label="2 stars">★</button>
+              <button type="button" class="star-btn selected" data-value="3" aria-label="3 stars">★</button>
+              <button type="button" class="star-btn selected" data-value="4" aria-label="4 stars">★</button>
+              <button type="button" class="star-btn selected" data-value="5" aria-label="5 stars">★</button>
+            </div>
+            <input type="hidden" id="review-rating-value" value="5">
+          </div>
+
+          <!-- Compliment Badges -->
+          <div class="form-group">
+            <label class="form-label">What made this volunteer special?</label>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--font-body);">
+                <input type="checkbox" name="compliment_tag" value="Very Patient" checked style="width: 22px; height: 22px;">
+                <span>Very Patient & Calm</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--font-body);">
+                <input type="checkbox" name="compliment_tag" value="Clear Explanations" checked style="width: 22px; height: 22px;">
+                <span>Explained Steps Clearly</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--font-body);">
+                <input type="checkbox" name="compliment_tag" value="Warm & Friendly" style="width: 22px; height: 22px;">
+                <span>Warm, Respectful & Friendly</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: var(--font-body);">
+                <input type="checkbox" name="compliment_tag" value="Fast & Reliable" style="width: 22px; height: 22px;">
+                <span>Solved Problem Quickly</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Optional Comment -->
+          <div class="form-group">
+            <label class="form-label" for="review-comment">Say a thank-you or leave a note (Optional):</label>
+            <textarea id="review-comment" class="form-textarea" placeholder="e.g. David was so kind and made me feel safe paying my bill!"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Skip</button>
+          <button type="submit" class="btn btn-success">
+            ⭐ Submit Rating & Finish
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 5: NOTIFICATIONS DRAWER
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-notifications" role="dialog" aria-modal="true" aria-labelledby="notif-heading" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="notif-heading" style="font-size: var(--font-h3); font-weight: 800;">
+          🔔 Your Notifications
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close notifications">✕</button>
+      </div>
+
+      <div class="modal-body" id="notifications-list-container">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 6: CREATE DIGITAL GUIDE (ADMIN)
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-create-guide" role="dialog" aria-modal="true" aria-labelledby="modal-guide-heading" aria-hidden="true">
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="modal-header">
+        <h2 id="modal-guide-heading" style="font-size: var(--font-h2); font-weight: 800;">
+          📘 Publish New Digital Guide
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="form-create-guide">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="guide-title">Guide Title</label>
+            <input type="text" id="guide-title" class="form-input" placeholder="e.g. How to Order Medicines Online" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guide-category">Category</label>
+            <select id="guide-category" class="form-select">
+              <option value="payments">Digital Payments</option>
+              <option value="appointments">Appointments</option>
+              <option value="online_forms">Online Forms</option>
+              <option value="video_calls">Video Calls</option>
+              <option value="smartphone_use">Smartphone Use</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guide-summary">Brief Summary (1-2 sentences)</label>
+            <textarea id="guide-summary" class="form-textarea" style="min-height: 80px;" placeholder="Safe steps to order regular prescription refills directly to your door." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guide-safety">Safety Tip / Warning</label>
+            <input type="text" id="guide-safety" class="form-input" placeholder="Always check the medicine expiry date when the package arrives.">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="guide-steps-json">Steps (JSON Array of Step Objects)</label>
+            <textarea id="guide-steps-json" class="form-textarea" style="font-family: monospace; font-size: 0.95rem; min-height: 140px;" required>[
+  {"step_number": 1, "title": "Take a photo of your doctor prescription", "description": "Ensure daylight is bright and the doctor signature is readable.", "tip": "Rest your phone on a flat surface to avoid blurry photos."},
+  {"step_number": 2, "title": "Upload in the pharmacy app", "description": "Tap Upload Prescription and pick the photo.", "tip": "The pharmacist will call you to confirm your address."}
+]</textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish Guide</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =======================================================================
+       MODAL 7: SUPABASE CONNECTION SETTINGS
+       ======================================================================= -->
+  <div class="modal-overlay" id="modal-supabase" role="dialog" aria-modal="true" aria-labelledby="modal-supa-heading" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-supa-heading" style="font-size: var(--font-h2); font-weight: 800;">
+          ⚡ Supabase Configuration
+        </h2>
+        <button type="button" class="btn btn-secondary btn-icon-only" data-close-modal aria-label="Close dialog">✕</button>
+      </div>
+
+      <form id="form-supabase-config">
+        <div class="modal-body">
+          <p style="font-size: var(--font-body); color: var(--text-muted); margin-bottom: 16px;">
+            ElderAssist is currently running in <strong>Interactive Demo Mode</strong> with local storage persistence. You can plug in your real Supabase project below anytime!
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="supa-url">Supabase Project URL</label>
+            <input type="url" id="supa-url" class="form-input" placeholder="https://your-project.supabase.co">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="supa-key">Supabase Anon Public Key</label>
+            <input type="password" id="supa-key" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </div>
+
+          <div style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 14px; font-size: var(--font-sm); color: var(--text-muted); line-height: 1.5;">
+            <strong>Setup Checklist:</strong>
+            <ul style="margin-left: 20px; margin-top: 6px;">
+              <li>Run the SQL script located in <code>supabase/schema.sql</code> in your Supabase SQL Editor.</li>
+              <li>Paste your URL and Anon Key above and tap Save.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button type="button" class="btn btn-secondary" onclick="window.ElderApp.resetToDemoMode()">
+            🔄 Reset to Demo Mode
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary" data-close-modal>Close</button>
+            <button type="submit" class="btn btn-primary">Save & Connect</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="background-color: var(--bg-card); border-top: 2px solid var(--border-color); padding: 30px 20px; margin-top: auto;">
+    <div style="max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div>
+        <div style="font-size: 1.2rem; font-weight: 800; color: var(--text-main);">ElderAssist</div>
+        <div style="font-size: var(--font-sm); color: var(--text-muted);">Empowering Seniors Through Digital Compassion & Community Care.</div>
+      </div>
+
+      <div style="display: flex; gap: 16px; align-items: center; font-size: var(--font-sm);">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.ElderA11y.speak('ElderAssist is a compassionate platform connecting seniors with friendly volunteers for digital assistance. Need help? You can tap any category or call our helpline.')">
+          🔊 Read About Us
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="window.ElderApp.openSupabaseModal()">
+          ⚙️ Database Setup
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/accessibility.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
